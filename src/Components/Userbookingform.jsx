@@ -262,20 +262,45 @@ const Userbookingform = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (Validate()) {
-      try {
-        const response = await axios.post("https://final-back-end-code-for-local-event.onrender.com/localevent/booking", formData);
-        if (response.status === 201 || response.status === 200) {
-          alert("Registration Successful!");
-          navigate(-1);
+ const handleSubmit = async (event) => {
+  event.preventDefault();
+  if (Validate()) {
+    try {
+      const baseUrl = "https://final-back-end-code-for-local-event.onrender.com";
+      
+      // 1. Get Token and Session ID
+      const token = localStorage.getItem("userToken");
+      const sessionId = sessionStorage.getItem('sessionId'); 
+
+      // 2. Prepare Payload (Ensuring event and user IDs are present)
+      const payload = {
+        ...formData,
+        event: eventId, // From useParams()
+        user: sessionId // Linking the booking to the logged-in user
+      };
+
+      console.log("Submitting Payload:", payload);
+
+      // 3. Send Request with Authorization Headers
+      const response = await axios.post(`${baseUrl}/booking`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-      } catch (err) {
-        alert(err.response?.data?.message || "Registration failed");
+      });
+
+      if (response.status === 201 || response.status === 200) {
+        alert("Registration Successful!");
+        navigate(-1);
       }
+    } catch (err) {
+      // 4. LOG THE ACTUAL SERVER MESSAGE
+      // This will tell you EXACTLY which field is failing validation
+      console.error("Server says:", err.response?.data);
+      alert(err.response?.data?.message || "Registration failed (400 Bad Request)");
     }
-  };
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-2">
