@@ -74,7 +74,7 @@ const Adminbookingform = () => {
   //Load with edit id
  function LoadEditEventId() {
   const fetchdata = async () => {
-    axios.get(`http://localhost:3000/localevent/geteventbyid/${eventid.id}`)
+    axios.get(`https://final-back-end-code-for-local-event.onrender.com/localevent/geteventbyid/${eventid.id}`)
       .then((res) => {
         let res1 = res.data.result;
         
@@ -113,22 +113,38 @@ const formattedForInput = res1.eventdate ? dayjs.utc(res1.eventdate).format('YYY
 )
   //Save
 // Correct Update Logic
+// --- Updated handleSubmit logic ---
 const handleSubmit = async (e) => {
   e.preventDefault();
   if (Validate()) {
     try {
+      // 1. Format date using UTC to prevent the -1 day shift
       const formattedDate = dayjs.utc(formData.eventdate).format('DD/MM/YYYY');
       const payload = { ...formData, eventdate: formattedDate };
+      const baseUrl = "https://final-back-end-code-for-local-event.onrender.com/localevent";
 
-      // Make sure the ID is correct and the method is PUT
-      const response = await axios.put(`https://final-back-end-code-for-local-event.onrender.com/localevent/updateevent/${eventid.id}`, payload);
-      
-      if (response.status === 200) {
-        alert("Event Updated Successfully");
-        navigate('/admindashboard');
+      if (text === 'save') {
+        // --- LOGIC FOR NEW EVENTS ---
+        const response = await axios.post(`${baseUrl}/createevent`, payload);
+        if (response.status === 200 || response.status === 201) {
+          alert("Event Saved Successfully");
+          navigate('/admindashboard');
+        }
+      } else {
+        // --- LOGIC FOR UPDATING EXISTING EVENTS ---
+        if (!eventid.id) {
+            alert("Event ID is missing for update!");
+            return;
+        }
+        const response = await axios.put(`${baseUrl}/updateevent/${eventid.id}`, payload);
+        if (response.status === 200) {
+          alert("Event Updated Successfully");
+          navigate('/admindashboard');
+        }
       }
     } catch (err) {
-      console.error("Update failed:", err.response?.data || err.message);
+      console.error("Action failed:", err.response?.data || err.message);
+      alert("Error: " + (err.response?.data?.message || "Something went wrong"));
     }
   }
 };
